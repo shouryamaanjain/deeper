@@ -56,7 +56,7 @@ export function useSessionSocket() {
   const socketRef = useRef<Socket<ServerToClient, ClientToServer> | null>(null);
 
   useEffect(() => {
-    const s = io(`${API_URL}/research`, { transports: ["websocket"], withCredentials: false });
+    const s = io<ServerToClient, ClientToServer>(`${API_URL}/research`, { transports: ["websocket"], withCredentials: false });
     socketRef.current = s as any;
     s.on(ServerEvent.SessionStatus, (p) => dispatch({ type: "session", id: p.sessionId, status: p.status, progress: p.overallProgress }));
     s.on(ServerEvent.Activity, (p) => dispatch({ type: "activity", msg: p.message, level: p.level, ts: p.timestamp }));
