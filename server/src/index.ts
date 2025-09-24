@@ -298,50 +298,67 @@ async function callParallel(mainQuery: string, subQuery: string): Promise<Parall
   const system = `You are a meticulous research agent. Answer the sub-query comprehensively with citations and a confidence score.`
   const user = [`Main query: ${mainQuery}`, `Sub-query: ${subQuery}`, `Return JSON matching the schema exactly.`].join('\n')
 
-  const response = await parallel.responses.create({
-    model: 'speed',
-    reasoning: { effort: 'medium' },
-    input: [
-      { role: 'system', content: [{ type: 'text', text: system }] },
-      { role: 'user', content: [{ type: 'text', text: user }] }
-    ],
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'parallel_research_response',
-        schema: {
-          type: 'object',
-          properties: {
-            reasoning: { type: 'string' },
-            answer: { type: 'string' },
-            citations: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  title: { type: 'string' },
-                  url: { type: 'string' },
-                  published: { type: 'string' },
-                  author: { type: 'string' }
-                },
-                required: ['url']
-              }
+  try {
+    const response = await parallel.responses.create({
+      model: 'speed',
+      reasoning: { effort: 'medium' },
+      input: [
+        { role: 'system', content: [{ type: 'text', text: system }] },
+        { role: 'user', content: [{ type: 'text', text: user }] }
+      ],
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'parallel_research_response',
+          schema: {
+            type: 'object',
+            properties: {
+              reasoning: { type: 'string' },
+              answer: { type: 'string' },
+              citations: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    url: { type: 'string' },
+                    published: { type: 'string' },
+                    author: { type: 'string' }
+                  },
+                  required: ['url']
+                }
+              },
+              confidence_score: { type: 'number' }
             },
-            confidence_score: { type: 'number' }
+            required: ['reasoning', 'answer', 'citations', 'confidence_score'],
+            additionalProperties: false
           },
-          required: ['reasoning', 'answer', 'citations', 'confidence_score'],
-          additionalProperties: false
-        },
-        strict: true
-      }
-    },
-    temperature: 0.3
-  })
-
-  const content = response.output[0] as any
-  const out = content?.content?.[0]?.text || content?.content?.[0]?.input_text
-  if (typeof out === 'string') return JSON.parse(out) as ParallelResult
-  if (content?.content?.[0]?.type === 'output_text') return JSON.parse(content.content[0].text) as ParallelResult
+          strict: true
+        }
+      },
+      temperature: 0.3
+    })
+    const content = response.output[0] as any
+    const out = content?.content?.[0]?.text || content?.content?.[0]?.input_text
+    if (typeof out === 'string') return JSON.parse(out) as ParallelResult
+    if (content?.content?.[0]?.type === 'output_text') return JSON.parse(content.content[0].text) as ParallelResult
+  } catch (err: any) {
+    const message = err?.message || ''
+    if (/not found|404|responses/i.test(message)) {
+      const chat = await parallel.chat.completions.create({
+        model: 'speed',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' }
+      })
+      const text = chat.choices?.[0]?.message?.content?.trim() || '{}'
+      return JSON.parse(text) as ParallelResult
+    }
+    throw err
+  }
   throw new Error('Unexpected response format from Parallel.ai')
 }
 
