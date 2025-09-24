@@ -16,6 +16,7 @@ export async function executeSubQueries(
 ) {
   const room = `session:${session.id}`;
   const { global, session: sessLimiter } = forSession(session.id);
+  const progressMap = new Map<string, number>(subQueries.map((s) => [s.id, 0]));
 
   await Promise.all(
     subQueries.map((sq) =>
@@ -46,12 +47,21 @@ export async function executeSubQueries(
           if (d.preview) preview = d.preview;
           if (typeof d.citationsDelta === "number") sourceCount = d.citationsDelta;
           const progress = Math.min(95, Math.max(sq.progress, Math.floor(preview.length / 3)));
+          progressMap.set(sq.id, progress);
           io.to(room).emit(ServerEvent.SubqueryUpdate, {
             sessionId: session.id,
             id: sq.id,
             progress,
             preview,
             sourceCount,
+          });
+          const overall = Math.round(
+            Array.from(progressMap.values()).reduce((a, b) => a + b, 0) / (progressMap.size || 1),
+          );
+          io.to(room).emit(ServerEvent.SessionStatus, {
+            sessionId: session.id,
+            status: "executing",
+            overallProgress: overall,
           });
         });
 
@@ -78,11 +88,21 @@ export async function executeSubQueries(
       }
     }
 
+    const finalProgress = done ? 100 : sq.progress;
+    progressMap.set(sq.id, finalProgress);
     io.to(room).emit(ServerEvent.SubqueryUpdate, {
       sessionId: session.id,
       id: sq.id,
       status: done ? "completed" : "failed",
-      progress: done ? 100 : sq.progress,
+      progress: finalProgress,
+    });
+    const overall = Math.round(
+      Array.from(progressMap.values()).reduce((a, b) => a + b, 0) / (progressMap.size || 1),
+    );
+    io.to(room).emit(ServerEvent.SessionStatus, {
+      sessionId: session.id,
+      status: done ? "executing" : "executing",
+      overallProgress: overall,
     });
   }
 }
