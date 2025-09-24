@@ -22,7 +22,6 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
-// Types
 type Phase =
   | "idle"
   | "analyzing"
@@ -39,9 +38,9 @@ type SubQuery = {
   id: string;
   text: string;
   status: SubQueryStatus;
-  progress: number; // 0-100
+  progress: number;
   sources: number;
-  confidence?: number; // 0-1
+  confidence?: number;
   snippet?: string;
   startedAt?: number;
   endedAt?: number;
@@ -204,7 +203,6 @@ export default function DeeperApp() {
     setPhase("decomposing");
     addActivity(`Generated ${seed.length} sub-queries`);
 
-    // Simulate timeline
     setTimeout(() => {
       setPhase("researching");
       addActivity("Parallel execution started (speed model)...");
