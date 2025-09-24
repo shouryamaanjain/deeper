@@ -17,6 +17,14 @@ export async function executeSubQueries(
   const room = `session:${session.id}`;
   const { global, session: sessLimiter } = forSession(session.id);
   const progressMap = new Map<string, number>(subQueries.map((s) => [s.id, 0]));
+  (global as any).on?.("depleted", () => {
+    io.to(room).emit(ServerEvent.Activity, {
+      sessionId: session.id,
+      message: "Rate limit reached (300/min). Throttling new requests…",
+      level: "warning",
+      timestamp: new Date().toISOString(),
+    } as any);
+  });
 
   await Promise.all(
     subQueries.map((sq) =>
