@@ -7,6 +7,7 @@ import { createOrchestrator } from "./orchestrator";
 import { registerSessionRoutes } from "./routes/sessions";
 import { getEnv } from "./types/env";
 import { Agent } from "undici";
+import { setupGateway } from "./ws/gateway";
 
 async function bootstrap() {
   const env = getEnv();
@@ -21,6 +22,7 @@ async function bootstrap() {
   const dispatcher = new Agent({ keepAliveTimeout: 10_000, keepAliveMaxTimeout: 30_000 });
   const parallel = createParallelClient(env.PARALLEL_API_KEY, "https://api.parallel.ai", dispatcher);
   const orchestrator = createOrchestrator(io, { research: parallel.streamResearch });
+  setupGateway(io as any, orchestrator);
 
   await registerSessionRoutes(app, orchestrator);
 

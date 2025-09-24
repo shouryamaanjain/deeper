@@ -5,7 +5,7 @@ import type { ParallelResponse } from "@deeper/shared-types";
 import { Metrics } from "../analytics/metrics";
 
 export function createParallelClient(apiKey: string, baseURL = "https://api.parallel.ai", dispatcher?: Agent) {
-  const client = new OpenAI({ apiKey, baseURL, fetch: (url, init) => fetch(url, { ...(init || {}), dispatcher }) });
+  const client = new OpenAI({ apiKey, baseURL, fetch: (url, init) => fetch(url as any, Object.assign({}, init, { dispatcher }) as any) });
 
   async function streamResearch(input: string, onDelta: (delta: {
     textDelta?: string;
@@ -15,7 +15,7 @@ export function createParallelClient(apiKey: string, baseURL = "https://api.para
     Metrics.markParallelCall();
     // Using new Responses API with streaming events
     // @ts-ignore - stream typing is still evolving
-    const stream = await client.responses.create({
+    const stream: any = await client.responses.create({
       model: "speed",
       stream: true,
       input,
@@ -28,20 +28,20 @@ export function createParallelClient(apiKey: string, baseURL = "https://api.para
     let confidence = 0;
 
     // @ts-ignore
-    for await (const event of stream) {
+    for await (const event of stream as any) {
       // Types of events: response.output_text.delta, response.output_delta, response.completed
       // We attempt to build a preview from any text deltas observed.
       // @ts-ignore
-      if (event.type === "response.output_text.delta") {
-        const delta: string = event.delta || "";
+      if ((event as any).type === "response.output_text.delta") {
+        const delta: string = (event as any).delta || "";
         if (delta) {
           answer += delta;
           onDelta({ textDelta: delta, preview: answer.slice(0, 280) });
         }
       }
       // @ts-ignore
-      if (event.type === "response.output_delta") {
-        const output = event.output_delta?.[0]?.content?.[0];
+      if ((event as any).type === "response.output_delta") {
+        const output = (event as any).output_delta?.[0]?.content?.[0];
         if (output?.type === "output_text.delta") {
           const d = output.delta as string;
           answer += d;
@@ -63,8 +63,8 @@ export function createParallelClient(apiKey: string, baseURL = "https://api.para
         }
       }
       // @ts-ignore
-      if (event.type === "response.completed") {
-        const out = event.response?.output?.[0];
+      if ((event as any).type === "response.completed") {
+        const out = (event as any).response?.output?.[0];
         if (out?.content?.[0]?.type === "output_text") {
           answer = out.content[0].text || answer;
         }
