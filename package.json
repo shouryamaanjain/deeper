@@ -1,0 +1,19 @@
+{
+  "name": "deeper",
+  "private": true,
+  "packageManager": "pnpm@9.11.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier -w .",
+    "ci": "pnpm run typecheck && pnpm run lint && pnpm run build"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.1",
+    "typescript": "^5.8.3",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3"
+  }
+}

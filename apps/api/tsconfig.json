@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "noEmitOnError": true
+  },
+  "references": [
+    { "path": "../../packages/shared-types" },
+    { "path": "../../packages/lib" }
+  ],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
