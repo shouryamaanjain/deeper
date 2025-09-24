@@ -53,25 +53,24 @@ function reducer(state: State, action: Action): State {
 
 export function useSessionSocket() {
   const [state, dispatch] = useReducer(reducer, initial);
-  const socketRef = useRef<Socket<ServerToClient, ClientToServer> | null>(null);
+  const socketRef = useRef<any>(null);
 
   useEffect(() => {
-    const raw = io(`${API_URL}/research`, { transports: ["websocket"], withCredentials: false });
-    const s = raw as unknown as Socket<ServerToClient, ClientToServer>;
+    const s: any = io(`${API_URL}/research`, { transports: ["websocket"], withCredentials: false });
     socketRef.current = s;
-    s.on(ServerEvent.SessionStatus, (p) => dispatch({ type: "session", id: p.sessionId, status: p.status, progress: p.overallProgress }));
-    s.on(ServerEvent.Activity, (p) => dispatch({ type: "activity", msg: p.message, level: p.level, ts: p.timestamp }));
-    s.on(ServerEvent.SubqueryCreated, (p) => dispatch({ type: "sub_created", sub: p.subQuery }));
-    s.on(ServerEvent.SubqueryUpdate, (p) => dispatch({ type: "sub_update", id: p.id, patch: { status: p.status as any, progress: p.progress ?? 0, etaSeconds: p.etaSeconds, sourceCount: p.sourceCount ?? 0, preview: p.preview } }));
-    s.on(ServerEvent.SubqueryCompleted, (p) => dispatch({ type: "sub_update", id: p.id, patch: { status: "completed", progress: 100 } }));
-    s.on(ServerEvent.SubqueryFailed, (p) => dispatch({ type: "sub_update", id: p.id, patch: { status: "failed" } }));
+    s.on(ServerEvent.SessionStatus, (p: any) => dispatch({ type: "session", id: p.sessionId, status: p.status, progress: p.overallProgress }));
+    s.on(ServerEvent.Activity, (p: any) => dispatch({ type: "activity", msg: p.message, level: p.level, ts: p.timestamp }));
+    s.on(ServerEvent.SubqueryCreated, (p: any) => dispatch({ type: "sub_created", sub: p.subQuery }));
+    s.on(ServerEvent.SubqueryUpdate, (p: any) => dispatch({ type: "sub_update", id: p.id, patch: { status: p.status as any, progress: p.progress ?? 0, etaSeconds: p.etaSeconds, sourceCount: p.sourceCount ?? 0, preview: p.preview } }));
+    s.on(ServerEvent.SubqueryCompleted, (p: any) => dispatch({ type: "sub_update", id: p.id, patch: { status: "completed", progress: 100 } }));
+    s.on(ServerEvent.SubqueryFailed, (p: any) => dispatch({ type: "sub_update", id: p.id, patch: { status: "failed" } }));
     return () => {
       s.disconnect();
     };
   }, []);
 
   const startSession = useCallback((q: string) => {
-    socketRef.current?.emit(ClientEvent.SessionCreate, { query: q });
+    (socketRef.current as any)?.emit(ClientEvent.SessionCreate, { query: q });
   }, []);
 
   return { state, startSession };
