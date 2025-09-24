@@ -33,7 +33,7 @@ export function decomposeQuery(query: string): SubQuery[] {
   const subQueries: SubQuery[] = Array.from({ length: total }).map((_, i) => ({
     id: nanoid(),
     index: i,
-    text: templates[i % templates.length](query),
+    text: templates[i % templates.length]!(query),
     status: "queued",
     progress: 0,
     sourceCount: 0,
