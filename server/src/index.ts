@@ -67,8 +67,16 @@ fs.mkdirSync(dataDir, { recursive: true });
 const parallel = new OpenAI({ baseURL: 'https://api.parallel.ai', apiKey: process.env.PARALLEL_API_KEY });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Rate limiter: respect 300 req/min -> minTime ~ 200ms
-const limiter = new Bottleneck({ minTime: 210, maxConcurrent: 5 });
+// Rate limiter: configurable via PARALLEL_RPM (default 30 rpm)
+const PARALLEL_RPM = Number(process.env.PARALLEL_RPM || 30);
+const minTime = Math.ceil(60000 / Math.max(1, PARALLEL_RPM));
+const limiter = new Bottleneck({
+  minTime,
+  maxConcurrent: 5,
+  reservoir: PARALLEL_RPM,
+  reservoirRefreshAmount: PARALLEL_RPM,
+  reservoirRefreshInterval: 60_000,
+});
 
 function emit(sessionId: string, payload: any) {
   const set = sseClients.get(sessionId);
