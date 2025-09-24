@@ -56,8 +56,9 @@ export function useSessionSocket() {
   const socketRef = useRef<Socket<ServerToClient, ClientToServer> | null>(null);
 
   useEffect(() => {
-    const s = io<ServerToClient, ClientToServer>(`${API_URL}/research`, { transports: ["websocket"], withCredentials: false });
-    socketRef.current = s as any;
+    const raw = io(`${API_URL}/research`, { transports: ["websocket"], withCredentials: false });
+    const s = raw as unknown as Socket<ServerToClient, ClientToServer>;
+    socketRef.current = s;
     s.on(ServerEvent.SessionStatus, (p) => dispatch({ type: "session", id: p.sessionId, status: p.status, progress: p.overallProgress }));
     s.on(ServerEvent.Activity, (p) => dispatch({ type: "activity", msg: p.message, level: p.level, ts: p.timestamp }));
     s.on(ServerEvent.SubqueryCreated, (p) => dispatch({ type: "sub_created", sub: p.subQuery }));
