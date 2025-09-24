@@ -19,6 +19,8 @@ type State = {
     etaSeconds?: number;
     sourceCount: number;
     preview?: string;
+    attempts: number;
+    errors: string[];
   }>;
   activity: { message: string; level: "info" | "success" | "warning" | "error"; timestamp: string }[];
 };
